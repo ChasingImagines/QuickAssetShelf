@@ -17,10 +17,14 @@ public static class QuickAssetShelfService
     private const string PrefRecents = "QuickAssetShelf_RecentGuids";
     private const string PrefPinned = "QuickAssetShelf_PinnedGuids";
     private const string PrefStamp = "QuickAssetShelf_StampGuid";
+    private const string PrefIgnoredFolders = "QuickAssetShelf_IgnoredFolders";
     private const int MaxHistory = 50;
 
     public static readonly List<string> RecentGuids = new();
     public static readonly List<string> PinnedGuids = new();
+
+    /// <summary>Bu klasörlerin (ve alt klasörlerinin) altındaki asset'ler rafa hiç alınmaz.</summary>
+    public static readonly List<string> IgnoredFolders = new();
 
     private static GameObject _stampPrefab;
 
@@ -66,6 +70,9 @@ public static class QuickAssetShelfService
         PinnedGuids.Clear();
         PinnedGuids.AddRange(Split(EditorPrefs.GetString(PrefPinned, "")));
 
+        IgnoredFolders.Clear();
+        IgnoredFolders.AddRange(Split(EditorPrefs.GetString(PrefIgnoredFolders, "")));
+
         string stampGuid = EditorPrefs.GetString(PrefStamp, "");
         _stampPrefab = string.IsNullOrEmpty(stampGuid)
             ? null
@@ -74,6 +81,70 @@ public static class QuickAssetShelfService
 
     public static void SaveRecents() => EditorPrefs.SetString(PrefRecents, string.Join(";", RecentGuids));
     public static void SavePinned() => EditorPrefs.SetString(PrefPinned, string.Join(";", PinnedGuids));
+    public static void SaveIgnoredFolders() => EditorPrefs.SetString(PrefIgnoredFolders, string.Join(";", IgnoredFolders));
+
+    // ---------- Yoksayılan klasörler ----------
+
+    /// <summary>Verilen asset yolu yoksayılan bir klasörün (veya alt klasörünün) içinde mi?</summary>
+    public static bool IsIgnored(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath)) return false;
+
+        foreach (string folder in IgnoredFolders)
+        {
+            if (string.IsNullOrEmpty(folder)) continue;
+            if (assetPath.Equals(folder, StringComparison.OrdinalIgnoreCase)) return true;
+            if (assetPath.StartsWith(folder + "/", StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Yoksayılan klasör listesine klasör ekler. Değişiklik olduysa true döner.</summary>
+    public static bool AddIgnoredFolder(string folderPath)
+    {
+        if (string.IsNullOrEmpty(folderPath)) return false;
+
+        folderPath = folderPath.TrimEnd('/');
+        if (IgnoredFolders.Any(f => string.Equals(f, folderPath, StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        IgnoredFolders.Add(folderPath);
+        SaveIgnoredFolders();
+        return true;
+    }
+
+    /// <summary>Yoksayılan klasörü listeden çıkarır. Değişiklik olduysa true döner.</summary>
+    public static bool RemoveIgnoredFolder(string folderPath)
+    {
+        bool changed = IgnoredFolders.RemoveAll(f => string.Equals(f, folderPath, StringComparison.OrdinalIgnoreCase)) > 0;
+        if (changed) SaveIgnoredFolders();
+        return changed;
+    }
+
+    public static void ClearIgnoredFolders()
+    {
+        if (IgnoredFolders.Count == 0) return;
+        IgnoredFolders.Clear();
+        SaveIgnoredFolders();
+    }
+
+    /// <summary>Seçili asset'in bulunduğu klasörü yoksay listesine ekler.</summary>
+    public static bool AddIgnoredFolderFromSelection()
+    {
+        var selected = Selection.activeObject;
+        if (selected == null) return false;
+
+        string path = AssetDatabase.GetAssetPath(selected);
+        if (string.IsNullOrEmpty(path)) return false;
+
+        // Klasör seçildiyse onu, dosya seçildiyse içindeki klasörü yoksay.
+        string folder = AssetDatabase.IsValidFolder(path)
+            ? path
+            : (path.Contains('/') ? path.Substring(0, path.LastIndexOf('/')) : path);
+
+        if (string.IsNullOrEmpty(folder)) return false;
+        return AddIgnoredFolder(folder);
+    }
 
     private static string[] Split(string raw)
         => string.IsNullOrEmpty(raw) ? Array.Empty<string>() : raw.Split(';', StringSplitOptions.RemoveEmptyEntries);
@@ -111,9 +182,11 @@ public static class QuickAssetShelfService
     {
         RecentGuids.Clear();
         PinnedGuids.Clear();
+        IgnoredFolders.Clear();
         ActiveSpawnPrefab = null;
         SaveRecents();
         SavePinned();
+        SaveIgnoredFolders();
         QuickAssetShelf.RepaintWindow();
     }
 
@@ -146,7 +219,10 @@ public static class QuickAssetShelfService
         if (selected == null || !EditorUtility.IsPersistent(selected)) return;
         if (!IsShelfAsset(selected)) return;
 
-        string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(selected));
+        string assetPath = AssetDatabase.GetAssetPath(selected);
+        if (IsIgnored(assetPath)) return;
+
+        string guid = AssetDatabase.AssetPathToGUID(assetPath);
         if (string.IsNullOrEmpty(guid)) return;
 
         RecentGuids.Remove(guid);
@@ -236,6 +312,7 @@ public class QuickAssetShelf : EditorWindow
     private int _filterIndex;
     private string _search = "";
     private readonly string[] _filterOptions = { "Tümü", "Prefab", "SO" };
+    private bool _showIgnored;
 
     [MenuItem("Tools/Quick Asset Shelf")]
     public static void OpenWindow()
@@ -267,6 +344,68 @@ public class QuickAssetShelf : EditorWindow
         DrawToolbar();
         DrawActiveStampBanner();
         DrawItemList();
+        DrawIgnoredFolders();
+    }
+
+    private void DrawIgnoredFolders()
+    {
+        EditorGUILayout.Space(4);
+
+        int count = QuickAssetShelfService.IgnoredFolders.Count;
+        _showIgnored = EditorGUILayout.Foldout(_showIgnored, $"🚫 Yoksayılan Klasörler ({count})", true);
+        if (!_showIgnored) return;
+
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+        EditorGUILayout.LabelField(
+            "Bu klasörlerin altındaki prefab/SO'lar rafa kaydedilmez ve listede görünmez.",
+            new GUIStyle(EditorStyles.miniLabel) { wordWrap = true });
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Seçili klasörü ekle", EditorStyles.miniButton))
+            {
+                if (QuickAssetShelfService.AddIgnoredFolderFromSelection())
+                    Repaint();
+                else
+                    Debug.LogWarning("[QuickAssetShelf] Klasör eklenemedi. Project panelinden bir klasör seçin.");
+            }
+
+            using (new EditorGUI.DisabledScope(count == 0))
+            {
+                if (GUILayout.Button("Tümünü temizle", EditorStyles.miniButton, GUILayout.Width(110)))
+                {
+                    QuickAssetShelfService.ClearIgnoredFolders();
+                    Repaint();
+                }
+            }
+        }
+
+        for (int i = QuickAssetShelfService.IgnoredFolders.Count - 1; i >= 0; i--)
+        {
+            string folder = QuickAssetShelfService.IgnoredFolders[i];
+
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                if (GUILayout.Button(folder, EditorStyles.miniLabel))
+                {
+                    var folderObj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(folder);
+                    if (folderObj != null)
+                    {
+                        EditorGUIUtility.PingObject(folderObj);
+                        Selection.activeObject = folderObj;
+                    }
+                }
+
+                if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(20)))
+                {
+                    QuickAssetShelfService.RemoveIgnoredFolder(folder);
+                    GUIUtility.ExitGUI();
+                }
+            }
+        }
+
+        EditorGUILayout.EndVertical();
     }
 
     private void DrawToolbar()
@@ -429,6 +568,7 @@ public class QuickAssetShelf : EditorWindow
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             if (string.IsNullOrEmpty(path)) continue;
+            if (QuickAssetShelfService.IsIgnored(path)) continue;
 
             var item = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
             if (item == null) continue;
@@ -446,6 +586,66 @@ public class QuickAssetShelf : EditorWindow
         }
 
         return result;
+    }
+}
+
+/// <summary>Project paneli sağ tık menüsü: seçili klasörü rafın yoksay listesine ekler.</summary>
+internal static class QuickAssetShelfContextMenu
+{
+    private const string MenuPath = "Assets/Quick Asset Shelf/";
+    private const string AddIgnore = MenuPath + "Yoksayılan Klasörlere Ekle";
+    private const string RemoveIgnore = MenuPath + "Yoksayılan Klasörlerden Çıkar";
+
+    [MenuItem(AddIgnore, true)]
+    private static bool ValidateAddIgnore()
+        => GetSelectedFolder() != null;
+
+    [MenuItem(AddIgnore)]
+    private static void AddIgnoreToSelection()
+    {
+        string folder = GetSelectedFolder();
+        if (folder == null) return;
+
+        if (QuickAssetShelfService.AddIgnoredFolder(folder))
+        {
+            Debug.Log($"[QuickAssetShelf] Yoksayılan klasörlere eklendi: {folder}");
+            QuickAssetShelf.RepaintWindow();
+        }
+    }
+
+    [MenuItem(RemoveIgnore, true)]
+    private static bool ValidateRemoveIgnore()
+    {
+        string folder = GetSelectedFolder();
+        return folder != null && QuickAssetShelfService.IgnoredFolders.Any(
+            f => string.Equals(f, folder, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [MenuItem(RemoveIgnore)]
+    private static void RemoveIgnoreFromSelection()
+    {
+        string folder = GetSelectedFolder();
+        if (folder == null) return;
+
+        if (QuickAssetShelfService.RemoveIgnoredFolder(folder))
+        {
+            Debug.Log($"[QuickAssetShelf] Yoksayılan klasörlerden çıkarıldı: {folder}");
+            QuickAssetShelf.RepaintWindow();
+        }
+    }
+
+    private static string GetSelectedFolder()
+    {
+        var selected = Selection.activeObject;
+        if (selected == null) return null;
+
+        string path = AssetDatabase.GetAssetPath(selected);
+        if (string.IsNullOrEmpty(path)) return null;
+
+        if (AssetDatabase.IsValidFolder(path)) return path;
+
+        string parent = path.Contains('/') ? path.Substring(0, path.LastIndexOf('/')) : null;
+        return !string.IsNullOrEmpty(parent) && AssetDatabase.IsValidFolder(parent) ? parent : null;
     }
 }
 #endif

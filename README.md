@@ -17,7 +17,10 @@ tek tuşla yerleştir.
 - **Sürükle-bırak** — Rafdaki satırı Scene/Inspector'a sürükleyerek kullan.
 - **Damga (Stamp) modu** — Bir prefab'ı işaretle, Scene View'da `Shift + Sol Tık` veya `B` ile yerleştir.
   Yüzey normaline göre yerleşir, `Undo` destekler.
-- **Kalıcı** — Kayıtlar, sabitler ve aktif damga `EditorPrefs`'te tutulur; domain reload'da kaybolmaz.
+- **Yoksayılan klasörler (🚫)** — Belirli klasörleri işaretle; oralardaki prefab/SO'lar rafa hiç
+  kaydedilmez ve listede görünmez. Alt klasörler de kapsanır. Project panelinde klasöre sağ tıkla:
+  **Quick Asset Shelf → Yoksayılan Klasörlere Ekle**.
+- **Kalıcı** — Kayıtlar, sabitler, yoksayılan klasörler ve aktif damga `EditorPrefs`'te tutulur; domain reload'da kaybolmaz.
 
 ---
 
@@ -34,10 +37,10 @@ https://github.com/ChasingImagines/QuickAssetShelf.git
 veya `Packages/manifest.json` içine:
 
 ```json
-"com.chasingimagines.quickassetshelf": "https://github.com/ChasingImagines/QuickAssetShelf.git#v1.0.0"
+"com.chasingimagines.quickassetshelf": "https://github.com/ChasingImagines/QuickAssetShelf.git#v1.1.0"
 ```
 
-Sürüm sabitlemek için URL'nin sonuna `#v1.0.0` (veya bir commit hash'i) ekle. Sabitlemezsen
+Sürüm sabitlemek için URL'nin sonuna `#v1.1.0` (veya bir commit hash'i) ekle. Sabitlemezsen
 her zaman `main` dalının en son hali çekilir. Kurulum sırasında
 `... has no meta file, but it's in an immutable folder` uyarıları çıkabilir; zararsızdır
 (paket klasörü salt-okunurdur).
@@ -54,6 +57,7 @@ her zaman `main` dalının en son hali çekilir. Kurulum sırasında
 2. Project panelinden Prefab/SO seçtikçe rafa düşer (üstteki **● Dinliyor / ○ Duraklatıldı** ile kapatabilirsin).
 3. **📍** ile sabitle, **✕** ile kaldır, isme tıklayarak asset'i ping'le, çift tıklayarak aç.
 4. Bir prefab satırındaki **Damgala** ile damga moduna geç; Scene View'da `Shift + Sol Tık` veya `B`.
+5. İstemediğin klasörleri **🚫 Yoksayılan Klasörler** bölümünden ya da Project panelinde sağ tık menüsünden dışla.
 
 | Kısayol / Buton | İşlev |
 |---|---|
