@@ -34,8 +34,13 @@ https://github.com/ChasingImagines/QuickAssetShelf.git
 veya `Packages/manifest.json` içine:
 
 ```json
-"com.chasingimagines.quickassetshelf": "https://github.com/ChasingImagines/QuickAssetShelf.git"
+"com.chasingimagines.quickassetshelf": "https://github.com/ChasingImagines/QuickAssetShelf.git#v1.0.0"
 ```
+
+Sürüm sabitlemek için URL'nin sonuna `#v1.0.0` (veya bir commit hash'i) ekle. Sabitlemezsen
+her zaman `main` dalının en son hali çekilir. Kurulum sırasında
+`... has no meta file, but it's in an immutable folder` uyarıları çıkabilir; zararsızdır
+(paket klasörü salt-okunurdur).
 
 ### Elle
 
