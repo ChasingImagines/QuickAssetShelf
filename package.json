@@ -1,0 +1,22 @@
+{
+  "name": "com.chasingimagines.quickassetshelf",
+  "displayName": "Quick Asset Shelf",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "Prefab ve ScriptableObject'ler icin kalici bir hizli erisim rafi. Secilen asset'ler otomatik kaydedilir, sabitlenebilir, aranabilir ve prefab'lar Scene View'da damga olarak yerlestirilebilir.",
+  "keywords": [
+    "editor",
+    "prefab",
+    "scriptableobject",
+    "productivity",
+    "workflow"
+  ],
+  "author": {
+    "name": "ChasingImagines",
+    "url": "https://github.com/ChasingImagines"
+  },
+  "license": "MIT",
+  "documentationUrl": "https://github.com/ChasingImagines/QuickAssetShelf",
+  "changelogUrl": "https://github.com/ChasingImagines/QuickAssetShelf/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/ChasingImagines/QuickAssetShelf/blob/main/LICENSE"
+}
