@@ -1,13 +1,14 @@
 {
   "name": "com.chasingimagines.quickassetshelf",
   "displayName": "Quick Asset Shelf",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "unity": "2021.3",
-  "description": "Prefab ve ScriptableObject'ler icin kalici bir hizli erisim rafi. Secilen asset'ler otomatik kaydedilir, sabitlenebilir, aranabilir, istenmeyen klasorler yoksayilabilir ve prefab'lar Scene View'da damga olarak yerlestirilebilir.",
+  "description": "Prefab, ScriptableObject ve Material'lar icin kalici bir hizli erisim rafi. Secilen asset'ler otomatik kaydedilir, sabitlenebilir, aranabilir; tur ve klasor bazinda yoksayilabilir, ayarlar ayri pencerede tutulur ve prefab'lar Scene View'da damga olarak yerlestirilebilir.",
   "keywords": [
     "editor",
     "prefab",
     "scriptableobject",
+    "material",
     "productivity",
     "workflow"
   ],

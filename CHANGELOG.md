@@ -3,6 +3,23 @@
 Tüm dikkate değer değişiklikler bu dosyada tutulur.
 Biçim: [Keep a Changelog](https://keepachangelog.com/), sürümleme: [SemVer](https://semver.org/).
 
+## [1.2.0] - 2026-09-13
+
+### Added
+- **Material desteği**: raf artık Prefab ve ScriptableObject'in yanında `Material` asset'lerini de kaydeder (rozet: `[Materyal]`).
+- **Ayrı Ayarlar penceresi** (`Tools → Quick Asset Shelf → Ayarlar`): dinleme, izlenen türler,
+  geçmiş sınırı, yoksayılan klasörler ve veri temizleme tek yerde toplandı. Ana penceredeki `⚙` butonuyla açılır.
+- **Tür bazlı yoksayma**: izlenen türler (Prefab / ScriptableObject / Material) ayarlardan kapatılabilir;
+  kapatılan türler rafa kaydedilmez ve listede görünmez.
+- **Seçili türü temizle**: araç çubuğundaki `🗑` butonu, aktif filtrenin türündeki tüm kayıtları
+  (sabitlenenler dahil) onay alarak kaldırır. Project asset'leri silinmez.
+- **Geçmiş sınırı ayarı**: son kullanılanlar kayıt sayısı 10–200 arasında ayarlanabilir.
+- Filtre seçeneklerine **Materyal** eklendi.
+
+### Changed
+- Ana pencere sadeleştirildi; ayar ve yoksayılan klasör yönetimi Ayarlar penceresine taşındı.
+- Tüm türler kapalıyken ana pencere uyarı gösterir ve doğrudan Ayarlar'ı açan bir kısayol sunar.
+
 ## [1.1.0] - 2026-09-12
 
 ### Added
